@@ -1,0 +1,28 @@
+[project]
+name = "sec-registry"
+version = "0.1.0"
+description = "CLI para gerenciamento e injecao segura de secrets em processos locais."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "cryptography>=42.0.0",
+    "keyring>=25.0.0",
+    "pyyaml>=6.0.0",
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+api = [
+    "fastapi>=0.111.0",
+    "uvicorn>=0.30.0",
+]
+
+[project.scripts]
+sec-registry = "cli.main:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["cli"]

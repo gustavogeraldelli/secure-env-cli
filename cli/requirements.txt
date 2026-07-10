@@ -1,4 +1,0 @@
-cryptography
-pyyaml
-requests
-keyring

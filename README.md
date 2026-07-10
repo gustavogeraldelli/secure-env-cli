@@ -1,28 +1,53 @@
 # Sec-Registry
 
-O Sec-Registry é uma ferramenta de interface de linha de comando (CLI) desenvolvida para a gestão centralizada e segura de credenciais. O sistema elimina a necessidade de manter senhas e tokens expostos em arquivos de configuração estáticos, injetando os segredos diretamente na memória durante a execução das aplicações.
+CLI para armazenar secrets criptografados e injetá-los como variáveis de ambiente ao executar aplicações.
 
-## Funcionalidades Principais
+O projeto gira em torno da CLI. A API em `api/` é uma implementação simples de exemplo para demonstrar como um backend remoto pode atender aos requisitos da CLI e ajudar nos testes do fluxo remoto.
 
-* **Injeção de Dependências em Memória:** Os segredos são repassados aos processos alvo através de variáveis de ambiente gerenciadas por subprocessos. Os dados reais nunca são gravados no disco físico da máquina.
-* **Mapeamento Declarativo:** A substituição de credenciais hardcoded por um arquivo de contrato (`.registry.yml`), que mapeia quais variáveis o projeto exige e de onde elas devem ser extraídas no cofre.
-* **Criptografia Padronizada:** Implementação de algoritmos de mercado (AES-256-GCM com derivação de chave PBKDF2) para garantir a segurança dos dados em repouso.
-* **Operação Híbrida (Local e Remota):** Capacidade de alternar entre um cofre isolado na máquina do desenvolvedor e um servidor centralizado na nuvem, mantendo a mesma base de comandos.
-* **Resiliência de Rede:** O cliente HTTP integrado possui tolerância a falhas. Em caso de instabilidade na conexão com o servidor, o sistema aplica um mecanismo de recuo exponencial (Exponential Backoff) para evitar a interrupção de processos automatizados.
-* **Integração com Chaveiro do Sistema:** Conexão nativa com o gerenciador de credenciais do sistema operacional para armazenamento da senha mestra, garantindo uso diário sem interrupções manuais.
+## Requisitos
 
-## Arquitetura e Segurança
+* Python 3.10+
+* uv
 
-O sistema foi desenhado sob o princípio de isolamento de ambiente e proteção contra falhas operacionais:
+## Instalação
 
-* **Zero Exposição em Disco:** A ferramenta não utiliza arquivos temporários para expor senhas. O ciclo de vida do segredo em texto plano ocorre estritamente dentro da memória (RAM) alocada para o subprocesso durante a execução do comando alvo.
-* **Prevenção de Sobrescrita Acidental:** O fluxo operacional separa ações de leitura das ações de configuração. Comandos de injeção (`run`, `get`) funcionam de forma silenciosa para não quebrar pipelines de CI/CD. Em contrapartida, a inicialização de um cofre (`init`) bloqueia a leitura de variáveis de ambiente e força a confirmação manual, mitigando o risco de automações apagarem o banco de dados.
-* **Modularidade de Armazenamento:** A implementação utiliza Inversão de Dependência para isolar o motor criptográfico da camada de armazenamento de arquivos. Isso permite que a ferramenta transite de forma imperceptível entre a persistência em um arquivo JSON local e a transmissão segura de pacotes via API.
+Clone o projeto e sincronize o ambiente:
 
-## Guia de Uso
+```bash
+uv sync
+```
 
-### 1. Configuração do Projeto
-Na raiz do projeto que consumirá os segredos, cria-se o arquivo de mapeamento `.registry.yml`. O prefixo `secret:` indica que o valor deve ser buscado no cofre.
+Confira se a CLI está disponível:
+
+```bash
+uv run sec-registry --help
+```
+
+As dependências da CLI ficam em `pyproject.toml` e as versões resolvidas ficam em `uv.lock`.
+
+O fluxo com `uv` está explicado com mais detalhes em [UV.md](UV.md).
+
+## Uso rápido
+
+Inicialize um cofre:
+
+```bash
+uv run sec-registry init
+```
+
+Salve um secret:
+
+```bash
+uv run sec-registry set DB_PASS senha_banco_real
+```
+
+Leia um secret:
+
+```bash
+uv run sec-registry get DB_PASS
+```
+
+Crie um arquivo `.registry.yml` no projeto que vai receber as variáveis:
 
 ```yaml
 env:
@@ -31,45 +56,110 @@ env:
   API_TOKEN: "secret:API_TOKEN"
 ```
 
-### 2. Comandos do Cofre
-
-**Inicialização:**
-Cria um cofre vazio e estabelece a senha mestra.
+Execute a aplicação com o ambiente montado pela CLI:
 
 ```bash
-python -m cli.main init
+uv run sec-registry run uv run python cli/app_teste.py
 ```
 
-**Escrita e Leitura:**
-Guarda um valor criptografado e realiza a leitura do mesmo.
+Valores comuns são injetados como texto. Valores com prefixo `secret:` são buscados no cofre antes da execução.
+
+## Comandos
 
 ```bash
-python -m cli.main set DB_PASS senha_banco_real
-python -m cli.main get DB_PASS
+uv run sec-registry init
+uv run sec-registry set <chave> <valor>
+uv run sec-registry get <chave>
+uv run sec-registry run <comando>
+uv run sec-registry mode local
+uv run sec-registry mode remoto
+uv run sec-registry login
 ```
 
-**Execução Isolada:**
-Lê o contrato YAML, extrai os segredos do cofre e executa a aplicação alvo (ex: um script Python ou um projeto Node) injetando o ambiente seguro.
+Também é possível chamar a CLI pelo módulo Python:
 
 ```bash
-python -m cli.main run python app.py
+uv run python -m cli.main --help
 ```
 
-### 3. Gestão de Ambientes
+## Como funciona
 
-O sistema permite alterar a fonte de dados do cofre sem invalidar credenciais de acesso.
+No modo local, o cofre fica em:
 
-**Alternar para o modo remoto:**
+```text
+~/.sec-registry/vault.json
+```
+
+Os secrets são criptografados antes de serem persistidos. A CLI usa AES-GCM com chave derivada por PBKDF2.
+
+Durante o `run`, a CLI:
+
+1. lê o `.registry.yml`;
+2. separa variáveis estáticas de secrets;
+3. busca os secrets no cofre;
+4. executa o comando alvo com as variáveis adicionadas ao ambiente.
+
+A senha mestra pode ser lida de três formas:
+
+* variável `SEC_REGISTRY_PASSWORD`;
+* chaveiro do sistema via `keyring`;
+* prompt interativo.
+
+## Modo remoto
+
+O modo remoto usa a mesma CLI, mas troca o armazenamento local por uma API compatível.
+
+Faça login:
 
 ```bash
-python -m cli.main mode remoto
+uv run sec-registry login
 ```
 
-**Autenticação na API:**
-Estabelece sessão com o servidor e armazena o token de acesso dinâmico para comunicações futuras.
+Esse comando pede a URL da API e a senha do servidor, salva a configuração em `~/.sec-registry/config.json` e ativa o modo remoto.
+
+Também é possível alternar manualmente:
 
 ```bash
-python -m cli.main login
+uv run sec-registry mode local
+uv run sec-registry mode remoto
 ```
 
-*(Após o login, todos os comandos como `init`, `set`, `get` e `run` passam a operar contra a base de dados do servidor remoto automaticamente).*
+Quando o modo remoto está ativo, `init`, `set`, `get` e `run` passam a ler e salvar o cofre pela API.
+
+## API de exemplo
+
+A API não é o foco do projeto. Ela existe para mostrar o contrato mínimo que um backend remoto precisa oferecer para a CLI.
+
+Instale as dependências opcionais:
+
+```bash
+uv sync --extra api
+```
+
+Execute a API:
+
+```bash
+uv run --extra api uvicorn app.main:app --app-dir api --reload
+```
+
+Endpoints implementados:
+
+```text
+POST /auth
+GET  /vault
+PUT  /vault
+HEAD /vault
+```
+
+A API salva o payload criptografado em `server_vault.json`. Ela não conhece a senha mestra e não descriptografa secrets.
+Esse arquivo é gerado localmente e é ignorado pelo Git.
+
+## Estrutura
+
+```text
+cli/
+  cli/      comandos, parser do .registry.yml e injeção de ambiente
+  core/     regras do cofre, criptografia e providers de armazenamento
+api/
+  app/      API FastAPI de exemplo para o modo remoto
+```

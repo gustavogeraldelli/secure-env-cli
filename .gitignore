@@ -1,2 +1,7 @@
 venv/
+.venv/
+.uv-cache/
+*.egg-info/
 __pycache__/
+server_vault.json
+.env
