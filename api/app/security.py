@@ -1,7 +1,9 @@
 from fastapi import HTTPException, Header
 
-# banco ou validação de assinatura de um JWT
-TOKEN_MESTRE = "token-seguro"
+from .settings import get_server_token
+
+
+TOKEN_MESTRE = get_server_token()
 
 tokens_ativos = set()
 

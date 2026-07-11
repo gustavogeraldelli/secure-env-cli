@@ -139,7 +139,7 @@ uv sync --extra api
 Execute a API:
 
 ```bash
-uv run --extra api uvicorn app.main:app --app-dir api --reload
+SEC_REGISTRY_SERVER_TOKEN=dev-token uv run --extra api uvicorn app.main:app --app-dir api --reload
 ```
 
 Endpoints implementados:
@@ -153,6 +153,9 @@ HEAD /vault
 
 A API salva o payload criptografado em `server_vault.json`. Ela não conhece a senha mestra e não descriptografa secrets.
 Esse arquivo é gerado localmente e é ignorado pelo Git.
+
+A variável `SEC_REGISTRY_SERVER_TOKEN` é o segredo operacional usado pelo endpoint `POST /auth`.
+Veja [api/.env.example](api/.env.example).
 
 ## Estrutura
 
