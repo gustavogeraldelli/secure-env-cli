@@ -38,7 +38,7 @@ uv run sec-registry init
 Salve um secret:
 
 ```bash
-uv run sec-registry set DB_PASS senha_banco_real
+uv run sec-registry set DB_PASS
 ```
 
 Leia um secret:
@@ -68,13 +68,15 @@ Valores comuns são injetados como texto. Valores com prefixo `secret:` são bus
 
 ```bash
 uv run sec-registry init
-uv run sec-registry set <chave> <valor>
+uv run sec-registry set <chave>
 uv run sec-registry get <chave>
 uv run sec-registry run <comando>
 uv run sec-registry mode local
 uv run sec-registry mode remoto
 uv run sec-registry login
 ```
+
+O comando `set` pede o valor do secret por prompt oculto para evitar que ele fique salvo no histórico do shell.
 
 Também é possível chamar a CLI pelo módulo Python:
 

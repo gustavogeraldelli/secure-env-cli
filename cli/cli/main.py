@@ -41,6 +41,10 @@ def get_password(prompt: str = "senha mestra: ", force_prompt: bool = False) -> 
     return senha_digitada
 
 
+def get_secret_value(chave: str) -> str:
+    return getpass.getpass(f"valor para '{chave}': ")
+
+
 def login():
     """autentica na api remota e salva o token de acesso no config.json."""
     url = input("url da api: ").strip("/")
@@ -75,7 +79,6 @@ def main():
     
     cmd_set = subparsers.add_parser("set", help="guarda um segredo")
     cmd_set.add_argument("chave")
-    cmd_set.add_argument("valor")
 
     cmd_get = subparsers.add_parser("get", help="le um segredo")
     cmd_get.add_argument("chave")
@@ -137,7 +140,8 @@ def main():
 
         elif args.comando == "set":
             senha = get_password()
-            registry.set(senha, args.chave, args.valor)
+            valor = get_secret_value(args.chave)
+            registry.set(senha, args.chave, valor)
             print(f"secret '{args.chave}' guardado.")
 
         elif args.comando == "get":
