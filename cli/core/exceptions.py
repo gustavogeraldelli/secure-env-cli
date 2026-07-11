@@ -6,3 +6,6 @@ class VaultNotInitializedError(VaultError):
 
 class MasterPasswordError(VaultError):
     pass
+
+class RemoteStorageError(VaultError):
+    pass

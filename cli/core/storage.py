@@ -5,6 +5,8 @@ import requests
 import time
 from requests.exceptions import RequestException
 
+from .exceptions import RemoteStorageError
+
 class StorageProvider(ABC):
     """
     Contrato para os provedores de armazenamento.
@@ -73,8 +75,9 @@ class RemoteApiStorage(StorageProvider):
                 )
                 
                 if resposta.status_code in (401, 403):
-                    print("erro: sessao expirada ou acesso negado. rode o comando 'login' novamente.")
-                    exit(1)
+                    raise RemoteStorageError(
+                        "sessao expirada ou acesso negado. rode o comando 'login' novamente."
+                    )
 
                 if resposta.status_code == 404:
                     return resposta
@@ -84,11 +87,11 @@ class RemoteApiStorage(StorageProvider):
 
             except RequestException as e:
                 if tentativa == max_tentativas - 1:
-                    print(f"erro: falha na comunicacao com a api apos {max_tentativas} tentativas.")
-                    exit(1)
+                    raise RemoteStorageError(
+                        f"falha na comunicacao com a api apos {max_tentativas} tentativas."
+                    ) from e
                 
                 espera = 2 ** tentativa
-                print(f"aviso: instabilidade na rede. tentando novamente em {espera}s...")
                 time.sleep(espera)
 
     def load(self) -> dict:

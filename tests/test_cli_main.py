@@ -1,4 +1,4 @@
-from cli.main import get_secret_value
+from cli.prompts import get_secret_value
 
 
 def test_get_secret_value_returns_confirmed_value(monkeypatch):

@@ -2,52 +2,28 @@
 
 CLI para armazenar secrets criptografados e injetá-los como variáveis de ambiente ao executar aplicações.
 
-O projeto gira em torno da CLI. A API em `api/` é uma implementação simples de exemplo para demonstrar como um backend remoto pode atender aos requisitos da CLI e ajudar nos testes do fluxo remoto.
+A CLI é o foco do projeto. A API em `api/` é apenas uma implementação de exemplo de um backend remoto compatível.
 
-## Requisitos
+## Uso
 
-* Python 3.10+
-* uv
-
-## Instalação
-
-Clone o projeto e sincronize o ambiente:
+Requisitos: Python 3.10+ e `uv`.
 
 ```bash
 uv sync
-```
-
-Confira se a CLI está disponível:
-
-```bash
 uv run sec-registry --help
 ```
 
-As dependências da CLI ficam em `pyproject.toml` e as versões resolvidas ficam em `uv.lock`.
-
-O fluxo com `uv` está explicado com mais detalhes em [UV.md](UV.md).
-
-## Uso rápido
-
-Inicialize um cofre:
+Fluxo básico:
 
 ```bash
 uv run sec-registry init
-```
-
-Salve um secret:
-
-```bash
 uv run sec-registry set DB_PASS
-```
-
-Leia um secret:
-
-```bash
 uv run sec-registry get DB_PASS
 ```
 
-Crie um arquivo `.registry.yml` no projeto que vai receber as variáveis:
+O comando `set` pede o valor do secret por prompt oculto, evitando que o valor fique salvo no histórico do shell.
+
+Crie um `.registry.yml` no projeto que vai receber as variáveis:
 
 ```yaml
 env:
@@ -62,9 +38,7 @@ Execute a aplicação com o ambiente montado pela CLI:
 uv run sec-registry run uv run python cli/app_teste.py
 ```
 
-Valores comuns são injetados como texto. Valores com prefixo `secret:` são buscados no cofre antes da execução.
-
-## Comandos
+Comandos disponíveis:
 
 ```bash
 uv run sec-registry init
@@ -76,8 +50,6 @@ uv run sec-registry mode remoto
 uv run sec-registry login
 ```
 
-O comando `set` pede o valor do secret por prompt oculto para evitar que ele fique salvo no histórico do shell.
-
 Também é possível chamar a CLI pelo módulo Python:
 
 ```bash
@@ -86,61 +58,40 @@ uv run python -m cli.main --help
 
 ## Como funciona
 
-No modo local, o cofre fica em:
+No modo local, o cofre fica em `~/.sec-registry/vault.json`. Os secrets são criptografados antes de serem persistidos usando AES-GCM, com chave derivada da senha mestra por PBKDF2.
 
-```text
-~/.sec-registry/vault.json
-```
+Durante o `run`, a CLI lê o `.registry.yml`, separa variáveis estáticas de referências `secret:`, busca os valores no cofre e executa o comando alvo com as variáveis adicionadas ao ambiente.
 
-Os secrets são criptografados antes de serem persistidos. A CLI usa AES-GCM com chave derivada por PBKDF2.
-
-Durante o `run`, a CLI:
-
-1. lê o `.registry.yml`;
-2. separa variáveis estáticas de secrets;
-3. busca os secrets no cofre;
-4. executa o comando alvo com as variáveis adicionadas ao ambiente.
-
-A senha mestra pode ser lida de três formas:
+A senha mestra pode vir de três lugares:
 
 * variável `SEC_REGISTRY_PASSWORD`;
 * chaveiro do sistema via `keyring`;
 * prompt interativo.
 
+O `.registry.yml` não guarda secrets criptografados; ele é só o contrato de ambiente. Pode ser versionado quando contém apenas nomes de variáveis e referências como `secret:DB_PASS`. Evite colocar valores sensíveis diretamente nele.
+
+O que é criptografado é o cofre (`vault.json` no modo local ou o payload salvo pela API no modo remoto). Em CI, a senha mestra pode vir de um secret do provedor via `SEC_REGISTRY_PASSWORD`. Versionar um cofre criptografado pode ser aceitável em alguns fluxos, desde que a senha mestra fique fora do repositório; ainda assim, o arquivo pode ser copiado e atacado offline.
+
+Limitações principais:
+
+* `SEC_REGISTRY_PASSWORD` deve ser tratado como segredo;
+* o modo remoto atual é exemplo, não backend pronto para produção;
+* não há rotação automática de secrets, controle de acesso por usuário ou auditoria completa.
+
 ## Modo remoto
 
 O modo remoto usa a mesma CLI, mas troca o armazenamento local por uma API compatível.
 
-Faça login:
-
 ```bash
 uv run sec-registry login
-```
-
-Esse comando pede a URL da API e a senha do servidor, salva a configuração em `~/.sec-registry/config.json` e ativa o modo remoto.
-
-Também é possível alternar manualmente:
-
-```bash
 uv run sec-registry mode local
 uv run sec-registry mode remoto
 ```
 
-Quando o modo remoto está ativo, `init`, `set`, `get` e `run` passam a ler e salvar o cofre pela API.
-
-## API de exemplo
-
-A API não é o foco do projeto. Ela existe para mostrar o contrato mínimo que um backend remoto precisa oferecer para a CLI.
-
-Instale as dependências opcionais:
+Para rodar a API de exemplo:
 
 ```bash
 uv sync --extra api
-```
-
-Execute a API:
-
-```bash
 SEC_REGISTRY_SERVER_TOKEN=dev-token uv run --extra api uvicorn app.main:app --app-dir api --reload
 ```
 
@@ -153,23 +104,18 @@ PUT  /vault
 HEAD /vault
 ```
 
-A API salva o payload criptografado em `server_vault.json`. Ela não conhece a senha mestra e não descriptografa secrets.
-Esse arquivo é gerado localmente e é ignorado pelo Git.
+A API salva o payload criptografado em `server_vault.json`, arquivo gerado localmente e ignorado pelo Git. A variável `SEC_REGISTRY_SERVER_TOKEN` é o segredo operacional usado pelo endpoint `POST /auth`; veja [api/.env.example](api/.env.example).
 
-A variável `SEC_REGISTRY_SERVER_TOKEN` é o segredo operacional usado pelo endpoint `POST /auth`.
-Veja [api/.env.example](api/.env.example).
-
-## Estrutura
+## Estrutura e testes
 
 ```text
 cli/
-  cli/      comandos, parser do .registry.yml e injeção de ambiente
-  core/     regras do cofre, criptografia e providers de armazenamento
+  cli/      entrada da CLI, comandos, prompts, parser e injeção de ambiente
+  core/     regra de negócio, criptografia, storage e exceções
 api/
   app/      API FastAPI de exemplo para o modo remoto
+tests/      testes do core e da CLI
 ```
-
-## Testes
 
 ```bash
 uv run pytest
