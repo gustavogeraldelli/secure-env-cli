@@ -163,3 +163,9 @@ cli/
 api/
   app/      API FastAPI de exemplo para o modo remoto
 ```
+
+## Testes
+
+```bash
+uv run pytest
+```
