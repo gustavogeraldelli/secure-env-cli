@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from core.exceptions import VaultError
-from core.registry import Registry
+from core.vault import Vault
 from core.storage import LocalFileStorage, RemoteApiStorage, StorageProvider
 
 
@@ -11,8 +11,8 @@ def build_storage(config: dict) -> StorageProvider:
             raise VaultError("modo remoto ativado, mas api_url ou token faltam no config.json")
         return RemoteApiStorage(config["api_url"], config["token"])
 
-    return LocalFileStorage(Path.home() / ".sec-registry")
+    return LocalFileStorage(Path.home() / ".secure-env")
 
 
-def build_registry(config: dict) -> Registry:
-    return Registry(build_storage(config))
+def build_vault(config: dict) -> Vault:
+    return Vault(build_storage(config))

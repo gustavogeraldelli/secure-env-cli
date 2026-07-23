@@ -4,13 +4,13 @@ import os
 import keyring
 
 
-SERVICO = "sec-registry"
+SERVICO = "secure-env"
 USUARIO = "master-key"
 
 
 def get_password(prompt: str = "senha mestra: ", force_prompt: bool = False) -> str:
     if not force_prompt:
-        senha_env = os.environ.get("SEC_REGISTRY_PASSWORD")
+        senha_env = os.environ.get("SECURE_ENV_PASSWORD")
         if senha_env:
             return senha_env
 

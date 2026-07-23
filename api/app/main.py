@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from .routes import router
 
-app = FastAPI(title="Registry API")
+app = FastAPI(title="Secure Env API")
 
 app.include_router(router)

@@ -6,8 +6,8 @@ from cli.parser import ler_yml, separar_variaveis
 
 
 def test_ler_yml_returns_env_block(tmp_path):
-    registry_file = tmp_path / ".registry.yml"
-    registry_file.write_text(
+    config_file = tmp_path / ".secure-env.yml"
+    config_file.write_text(
         """
 env:
   PORT: 8080
@@ -17,7 +17,7 @@ env:
         encoding="utf-8",
     )
 
-    assert ler_yml(registry_file) == {
+    assert ler_yml(config_file) == {
         "PORT": 8080,
         "DEBUG": False,
         "DB_PASS": "secret:DB_PASS",
@@ -25,23 +25,23 @@ env:
 
 
 def test_ler_yml_returns_empty_dict_when_env_block_is_missing(tmp_path):
-    registry_file = tmp_path / ".registry.yml"
-    registry_file.write_text("name: example\n", encoding="utf-8")
+    config_file = tmp_path / ".secure-env.yml"
+    config_file.write_text("name: example\n", encoding="utf-8")
 
-    assert ler_yml(registry_file) == {}
+    assert ler_yml(config_file) == {}
 
 
 def test_ler_yml_returns_empty_dict_for_empty_file(tmp_path):
-    registry_file = tmp_path / ".registry.yml"
-    registry_file.write_text("", encoding="utf-8")
+    config_file = tmp_path / ".secure-env.yml"
+    config_file.write_text("", encoding="utf-8")
 
-    assert ler_yml(registry_file) == {}
+    assert ler_yml(config_file) == {}
 
 
 def test_ler_yml_fails_when_file_does_not_exist(tmp_path):
-    missing_file = tmp_path / ".registry.yml"
+    missing_file = tmp_path / ".secure-env.yml"
 
-    with pytest.raises(FileNotFoundError, match="arquivo .registry.yml nao encontrado"):
+    with pytest.raises(FileNotFoundError, match="arquivo .secure-env.yml nao encontrado"):
         ler_yml(missing_file)
 
 

@@ -2,8 +2,8 @@ from .storage import StorageProvider
 from .cipher import Cipher
 from .exceptions import VaultError, VaultNotInitializedError
 
-class Registry:
-    """Orquestra a regra de negócio utilizando Storage agnóstico e o motor de cifra."""
+class Vault:
+    """Representa o cofre de secrets e orquestra criptografia e persistencia."""
     
     def __init__(self, storage: StorageProvider):
         self.storage = storage

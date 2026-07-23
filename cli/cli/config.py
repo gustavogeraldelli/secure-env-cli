@@ -3,7 +3,7 @@ from pathlib import Path
 
 def carregar_config() -> dict:
     """Lê as configurações globais da CLI na máquina do usuário."""
-    config_path = Path.home() / ".sec-registry" / "config.json"
+    config_path = Path.home() / ".secure-env" / "config.json"
     
     config_padrao = {
         "modo": "local",

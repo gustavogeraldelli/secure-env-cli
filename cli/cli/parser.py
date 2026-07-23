@@ -4,7 +4,7 @@ from pathlib import Path
 def ler_yml(caminho: Path) -> dict:
     """Lê o arquivo de configuração e retorna o bloco de variáveis de ambiente."""
     if not caminho.exists():
-        raise FileNotFoundError("arquivo .registry.yml nao encontrado nesta pasta.")
+        raise FileNotFoundError("arquivo .secure-env.yml nao encontrado nesta pasta.")
     
     with open(caminho, 'r') as f:
         config = yaml.safe_load(f) or {}

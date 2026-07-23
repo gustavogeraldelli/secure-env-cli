@@ -9,7 +9,7 @@ from cli.config import carregar_config
 from cli.injector import executar_com_ambiente
 from cli.parser import ler_yml, separar_variaveis
 from cli.prompts import get_password, get_secret_value
-from cli.runtime import build_registry
+from cli.runtime import build_vault
 
 
 def cmd_login() -> None:
@@ -26,7 +26,7 @@ def cmd_login() -> None:
             "token": resposta.json()["access_token"],
         }
 
-        dir_config = Path.home() / ".sec-registry"
+        dir_config = Path.home() / ".secure-env"
         dir_config.mkdir(exist_ok=True)
 
         with open(dir_config / "config.json", "w") as f:
@@ -39,7 +39,7 @@ def cmd_login() -> None:
 
 
 def cmd_mode(tipo: str) -> None:
-    dir_config = Path.home() / ".sec-registry"
+    dir_config = Path.home() / ".secure-env"
     arquivo_config = dir_config / "config.json"
 
     if not arquivo_config.exists():
@@ -57,41 +57,41 @@ def cmd_mode(tipo: str) -> None:
 
 
 def cmd_init() -> None:
-    registry = build_registry(carregar_config())
+    vault = build_vault(carregar_config())
     senha = get_password("crie a senha mestra: ", force_prompt=True)
 
-    if not os.environ.get("SEC_REGISTRY_PASSWORD"):
+    if not os.environ.get("SECURE_ENV_PASSWORD"):
         if senha != getpass.getpass("confirme a senha: "):
             print("erro: as senhas nao batem.")
             return
 
-    registry.init(senha)
+    vault.init(senha)
     print("cofre inicializado.")
 
 
 def cmd_set(chave: str) -> None:
-    registry = build_registry(carregar_config())
+    vault = build_vault(carregar_config())
     senha = get_password()
     valor = get_secret_value(chave)
 
-    registry.set(senha, chave, valor)
+    vault.set(senha, chave, valor)
     print(f"secret '{chave}' guardado.")
 
 
 def cmd_get(chave: str) -> None:
-    registry = build_registry(carregar_config())
+    vault = build_vault(carregar_config())
     senha = get_password()
 
-    print(registry.get(senha, chave))
+    print(vault.get(senha, chave))
 
 
 def cmd_run(comando_alvo: list[str]) -> None:
     if not comando_alvo:
-        print("erro: especifique o comando a executar. ex: sec-registry run npm start")
+        print("erro: especifique o comando a executar. ex: secure-env run npm start")
         return
 
-    registry = build_registry(carregar_config())
-    env_vars = ler_yml(Path(".registry.yml"))
+    vault = build_vault(carregar_config())
+    env_vars = ler_yml(Path(".secure-env.yml"))
 
     estaticas, secrets_pendentes = separar_variaveis(env_vars)
     print(f"leitura concluida: {len(estaticas)} vars estaticas, {len(secrets_pendentes)} secrets.")
@@ -100,6 +100,6 @@ def cmd_run(comando_alvo: list[str]) -> None:
     if secrets_pendentes:
         senha = get_password()
         for chave_env, chave_vault in secrets_pendentes:
-            secrets_extraidos[chave_env] = registry.get(senha, chave_vault)
+            secrets_extraidos[chave_env] = vault.get(senha, chave_vault)
 
     executar_com_ambiente(comando_alvo, {**estaticas, **secrets_extraidos})
