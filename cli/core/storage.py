@@ -1,11 +1,13 @@
 import json
+import time
 from abc import ABC, abstractmethod
 from pathlib import Path
+
 import requests
-import time
 from requests.exceptions import RequestException
 
 from .exceptions import RemoteStorageError
+
 
 class StorageProvider(ABC):
     """

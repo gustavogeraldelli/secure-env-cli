@@ -1,6 +1,7 @@
 import os
 import subprocess
 
+
 def executar_com_ambiente(comando_alvo: list, novas_variaveis: dict):
     """Cria um ambiente isolado com o OS atual com os segredos e executa o comando."""
     env_isolado = os.environ.copy()

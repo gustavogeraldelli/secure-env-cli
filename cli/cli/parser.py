@@ -1,5 +1,7 @@
-import yaml
 from pathlib import Path
+
+import yaml
+
 
 def ler_yml(caminho: Path) -> dict:
     """Lê o arquivo de configuração e retorna o bloco de variáveis de ambiente."""

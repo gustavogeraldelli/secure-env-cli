@@ -1,7 +1,6 @@
-from fastapi import HTTPException, Header
+from fastapi import Header, HTTPException
 
 from .settings import get_server_token
-
 
 TOKEN_MESTRE = get_server_token()
 

@@ -3,7 +3,6 @@ import os
 
 import keyring
 
-
 SERVICO = "secure-env"
 USUARIO = "master-key"
 

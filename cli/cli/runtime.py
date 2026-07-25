@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from core.exceptions import VaultError
-from core.vault import Vault
 from core.storage import LocalFileStorage, RemoteApiStorage, StorageProvider
+from core.vault import Vault
 
 
 def build_storage(config: dict) -> StorageProvider:

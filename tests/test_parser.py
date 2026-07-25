@@ -1,7 +1,5 @@
-from pathlib import Path
 
 import pytest
-
 from cli.parser import ler_yml, separar_variaveis
 
 

@@ -1,6 +1,7 @@
-from .storage import StorageProvider
 from .cipher import Cipher
 from .exceptions import VaultError, VaultNotInitializedError
+from .storage import StorageProvider
+
 
 class Vault:
     """Representa o cofre de secrets e orquestra criptografia e persistencia."""

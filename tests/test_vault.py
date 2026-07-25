@@ -1,5 +1,4 @@
 import pytest
-
 from core.exceptions import VaultError, VaultNotInitializedError
 from core.vault import Vault
 

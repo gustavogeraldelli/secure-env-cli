@@ -1,5 +1,7 @@
 # Secure Env CLI
 
+[![CI](https://github.com/gustavogeraldelli/secure-env-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/gustavogeraldelli/secure-env-cli/actions/workflows/ci.yml)
+
 CLI para armazenar secrets criptografados e injetá-los como variáveis de ambiente ao executar aplicações.
 
 A CLI é o foco do projeto. A API em `api/` é apenas uma implementação de exemplo de um backend remoto compatível.
@@ -118,5 +120,8 @@ tests/      testes do core e da CLI
 ```
 
 ```bash
+uv run ruff check .
 uv run pytest
 ```
+
+CI runs lint, the Python test suite, and validates the CLI entrypoint on push to `main` and pull requests.

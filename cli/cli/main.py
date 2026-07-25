@@ -1,6 +1,7 @@
 import argparse
 
 from core.exceptions import VaultError
+
 from cli.commands import cmd_get, cmd_init, cmd_login, cmd_mode, cmd_run, cmd_set
 
 

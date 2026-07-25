@@ -1,11 +1,12 @@
 import json
-from pydantic import BaseModel
-from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, Response
-from typing import Dict, Any
 import secrets
+from pathlib import Path
+from typing import Any, Dict
 
-from .security import verificar_token, TOKEN_MESTRE, tokens_ativos
+from fastapi import APIRouter, Depends, HTTPException, Response
+from pydantic import BaseModel
+
+from .security import TOKEN_MESTRE, tokens_ativos, verificar_token
 
 router = APIRouter()
 DB_FILE = Path("server_vault.json")
@@ -35,9 +36,6 @@ def checar_existencia():
     if not DB_FILE.exists():
         raise HTTPException(status_code=404)
     return Response(status_code=200)
-
-class LoginRequest(BaseModel):
-    senha: str
 
 @router.post("/auth")
 def login(req: LoginRequest):

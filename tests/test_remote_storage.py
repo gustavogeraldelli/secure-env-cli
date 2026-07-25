@@ -1,6 +1,5 @@
 import pytest
 import requests
-
 from core.exceptions import RemoteStorageError
 from core.storage import RemoteApiStorage
 
